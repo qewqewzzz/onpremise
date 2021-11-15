@@ -1,54 +1,50 @@
-# Sentry On-Premise [![Build Status][build-status-image]][build-status-url]
+# Self-Hosted Sentry nightly
 
 Official bootstrap for running your own [Sentry](https://sentry.io/) with [Docker](https://www.docker.com/).
 
 ## Requirements
 
- * Docker 17.05.0+
- * Compose 1.17.0+
-
-## Minimum Hardware Requirements:
-
- * You need at least 3GB RAM
+* Docker 19.03.6+
+* Compose 1.28.0+
+* 4 CPU Cores
+* 8 GB RAM
+* 20 GB Free Disk Space
 
 ## Setup
 
-To get started with all the defaults, simply clone the repo and run `./install.sh` in your local check-out.
+To get started with all the defaults, simply clone the repo and run `./install.sh` in your local check-out. Sentry uses Python 3 by default since December 4th, 2020 and Sentry 21.1.0 is the last version to support Python 2.
 
-There may need to be modifications to the included `docker-compose.yml` file to accommodate your needs or your environment (such as adding GitHub credentials). If you want to perform these, do them before you run the install script.
+During the install, a prompt will ask if you want to create a user account. If you require that the install not be blocked by the prompt, run `./install.sh --no-user-prompt`.
 
-The recommended way to customize your configuration is using the files below, in that order:
+Please visit [our documentation](https://develop.sentry.dev/self-hosted/) for everything else.
 
- * `config.yml`
- * `sentry.conf.py`
- * `.env` w/ environment variables
+## Tips & Tricks
 
-If you have any issues or questions, our [Community Forum](https://forum.sentry.io/c/on-premise) is at your service!
+### Event Retention
 
-## Securing Sentry with SSL/TLS
+Sentry comes with a cleanup cron job that prunes events older than `90 days` by default. If you want to change that, you can change the `SENTRY_EVENT_RETENTION_DAYS` environment variable in `.env` or simply override it in your environment. If you do not want the cleanup cron, you can remove the `sentry-cleanup` service from the `docker-compose.yml`file.
 
-If you'd like to protect your Sentry install with SSL/TLS, there are
-fantastic SSL/TLS proxies like [HAProxy](http://www.haproxy.org/)
-and [Nginx](http://nginx.org/). You'll likely to add this service to your `docker-compose.yml` file.
+### Installing a specific SHA
 
-## Updating Sentry
+If you want to install a specific release of Sentry, use the tags/releases on this repo.
 
-Updating Sentry using Compose is relatively simple. Just use the following steps to update. Make sure that you have the latest version set in your Dockerfile. Or use the latest version of this repository.
+We continously push the Docker image for each commit made into [Sentry](https://github.com/getsentry/sentry), and other services such as [Snuba](https://github.com/getsentry/snuba) or [Symbolicator](https://github.com/getsentry/symbolicator) to [our Docker Hub](https://hub.docker.com/u/getsentry) and tag the latest version on master as `:nightly`. This is also usually what we have on sentry.io and what the install script uses. You can use a custom Sentry image, such as a modified version that you have built on your own, or simply a specific commit hash by setting the `SENTRY_IMAGE` environment variable to that image name before running `./install.sh`:
 
-Use the following steps after updating this repository or your Dockerfile:
-```sh
-docker-compose build --pull # Build the services again after updating, and make sure we're up to date on patch version
-docker-compose run --rm web upgrade # Run new migrations
-docker-compose up -d # Recreate the services
+```shell
+SENTRY_IMAGE=getsentry/sentry:83b1380 ./install.sh
 ```
 
-## Resources
+Note that this may not work for all commit SHAs as this repository evolves with Sentry and its satellite projects. It is highly recommended to check out a version of this repository that is close to the timestamp of the Sentry commit you are installing.
 
- * [Documentation](https://docs.sentry.io/server/installation/docker/)
- * [Bug Tracker](https://github.com/getsentry/onpremise/issues)
- * [Forums](https://forum.sentry.io/c/on-premise)
- * [IRC](irc://chat.freenode.net/sentry) (chat.freenode.net, #sentry)
+### Using Linux
 
+If you are using Linux and you need to use `sudo` when running `./install.sh`, make sure to place the environment variable *after* `sudo`:
 
-[build-status-image]: https://api.travis-ci.com/getsentry/onpremise.svg?branch=master
-[build-status-url]: https://travis-ci.com/getsentry/onpremise
+```shell
+sudo SENTRY_IMAGE=us.gcr.io/sentryio/sentry:83b1380 ./install.sh
+```
+
+Where you replace `83b1380` with the sha you want to use.
+
+[build-status-image]: https://github.com/getsentry/onpremise/workflows/test/badge.svg
+[build-status-url]: https://git.io/JUYkh
